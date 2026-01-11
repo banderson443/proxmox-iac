@@ -61,6 +61,13 @@ vm_default_bridge   = "vmbr0"
 
 # Base template (must exist in Proxmox)
 base_template = "ubuntu-cloud-template"
+
+# Cloud-init configuration (for Ansible access)
+cloudinit_user = "admin"
+cloudinit_ssh_keys = [
+  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAYourRealKeyHere comment@yourhost",
+  "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQYourRealKeyHere comment@yourhost"
+]
 ```
 
 **Important:**
@@ -68,13 +75,50 @@ base_template = "ubuntu-cloud-template"
 - Use environment variables (`TF_VAR_*`) for sensitive values
 - Example values in `variables.tf` are defaults only
 
+## VM Bootstrap Flow: Terraform → cloud-init → Ansible
+
+**The complete lifecycle:**
+
+1. **Terraform creates VM** with cloud-init enabled
+   - VM is cloned from template
+   - cloud-init injects SSH keys and creates user
+   - VM boots and applies cloud-init configuration
+
+2. **cloud-init bootstraps access**
+   - Creates user account (from `cloudinit_user` variable)
+   - Injects SSH public keys (from `cloudinit_ssh_keys` variable)
+   - Configures network (DHCP by default, no static IPs)
+   - VM becomes SSH-accessible immediately after boot
+
+3. **Ansible configures VM**
+   - Ansible connects via SSH using the injected keys
+   - Applies configuration (packages, security, services)
+   - VM is fully configured and ready for use
+
+**Why this works:**
+- Terraform provisions infrastructure (VM exists)
+- cloud-init provides initial access (SSH keys, user)
+- Ansible manages configuration (no manual steps needed)
+
+**SSH Keys:**
+- SSH public keys are provided via `cloudinit_ssh_keys` variable
+- Keys come from your `terraform.tfvars` file (not committed)
+- Same keys used for Ansible access
+- No passwords needed (key-based only)
+
+**Important:**
+- `terraform.tfvars` is in `.gitignore` (never commit secrets or keys)
+- Replace example keys in `variables.tf` with your real keys in `.tfvars`
+- The `cloudinit_ssh_keys` default values are examples only
+
 ## Example Resources
 
 The `main.tf` file includes an example VM resource demonstrating:
 - Declarative VM definition
 - Variable-based configuration (no hardcoded values)
+- cloud-init bootstrap for immediate Ansible access
 - Minimal configuration (name, cores, memory, disk)
-- No network IP assumptions
+- No network IP assumptions (uses DHCP)
 
 ## State Management
 

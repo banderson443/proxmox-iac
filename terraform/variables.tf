@@ -69,3 +69,19 @@ variable "vm_default_bridge" {
   default     = "vmbr0"
 }
 
+# Cloud-init configuration for VM bootstrap
+variable "cloudinit_user" {
+  description = "Username for cloud-init (will be created with sudo access)"
+  type        = string
+  default     = "admin"
+}
+
+variable "cloudinit_ssh_keys" {
+  description = "List of SSH public keys to inject via cloud-init (enables Ansible access)"
+  type        = list(string)
+  default = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAExampleKey1 comment@example",
+    "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQExampleKey2 comment@example"
+  ]
+}
+

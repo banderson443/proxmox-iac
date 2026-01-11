@@ -57,9 +57,15 @@ resource "proxmox_vm_qemu" "example_vm" {
     bridge = var.vm_default_bridge
   }
 
-  # Cloud-init enabled (no network configuration here)
+  # Cloud-init enabled for bootstrap
   agent    = 1
   os_type  = "cloud-init"
+
+  # Cloud-init configuration: inject SSH keys and user for Ansible access
+  # This makes the VM immediately reachable by Ansible after creation
+  ciuser     = var.cloudinit_user
+  sshkeys    = join("\n", var.cloudinit_ssh_keys)
+  ipconfig0  = "ip=dhcp"  # Use DHCP, no static IP assumptions
 
   # Lifecycle: prevent accidental destruction
   lifecycle {

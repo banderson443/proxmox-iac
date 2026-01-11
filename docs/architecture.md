@@ -64,8 +64,41 @@ This document describes the architecture and design decisions for the Proxmox in
 
 1. **Ansible** configures the Proxmox host
 2. **Terraform** provisions VMs using templates
-3. **Ansible** configures the provisioned VMs
-4. **Packer** (optional) creates new templates as needed
+3. **cloud-init** bootstraps VM access (SSH keys, user)
+4. **Ansible** configures the provisioned VMs
+5. **Packer** (optional) creates new templates as needed
+
+## VM Bootstrap Lifecycle
+
+**Complete flow from creation to configuration:**
+
+### Step 1: Terraform Creates VM
+- Terraform clones VM from template
+- VM is created with cloud-init enabled
+- VM boots and starts cloud-init process
+
+### Step 2: cloud-init Injects Access
+- cloud-init creates user account (from `cloudinit_user` variable)
+- cloud-init injects SSH public keys (from `cloudinit_ssh_keys` variable)
+- Network is configured (DHCP by default)
+- VM becomes SSH-accessible immediately after boot
+
+### Step 3: Ansible Configures VM
+- Ansible connects via SSH using the injected keys
+- Ansible applies configuration (packages, security, services)
+- VM is fully configured and ready for use
+
+**Key Benefits:**
+- **No manual steps**: VM is immediately accessible by Ansible
+- **Key-based only**: No passwords, secure by default
+- **Declarative**: All configuration in code (Terraform + Ansible)
+- **Idempotent**: Safe to run multiple times
+
+**Configuration Sources:**
+- Terraform variables come from `terraform.tfvars` (not committed)
+- SSH keys are provided via Terraform variables
+- Ansible uses the same SSH keys for access
+- No hardcoded values in code
 
 ## Directory Structure
 
