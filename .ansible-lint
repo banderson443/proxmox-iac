@@ -1,0 +1,26 @@
+---
+# Ansible Lint configuration
+# Minimal rules for pragmatic quality checks
+
+# Use default rules but allow some flexibility
+use_default_rules: true
+
+# Skip certain checks that are too strict for this use case
+skip_list:
+  - yaml[line-length]  # Allow longer lines for readability
+  - name[casing]       # Allow various naming conventions
+  - risky-shell-pipe   # Allow pipes in shell commands when needed
+
+# Allow some common patterns
+enable_list: []
+
+# Exclude paths that don't need linting
+exclude_paths:
+  - .cache/
+  - .github/
+  - docs/
+  - terraform/
+
+# Profile for basic checks
+profile: production
+

@@ -150,6 +150,40 @@ proxmox-infra/
 - **Rotate credentials**: Regularly update API tokens and passwords
 - **Limit access**: Use least-privilege principles for API access
 
+## Quality Gate / CI
+
+This repository includes automated quality checks via GitHub Actions:
+
+**Ansible Lint:**
+- Validates Ansible playbooks and roles
+- Checks syntax and best practices
+- Uses minimal, pragmatic rules (see `.ansible-lint`)
+
+**Terraform Format:**
+- Ensures consistent code formatting
+- Runs `terraform fmt -check`
+
+**Terraform Validate:**
+- Validates Terraform configuration syntax
+- Runs without backend (no credentials required)
+- Does not require provider initialization
+
+**CI runs on:**
+- Push to `master`/`main` branches
+- Pull requests to `master`/`main` branches
+
+**To run locally:**
+```bash
+# Ansible lint
+ansible-lint ansible/
+
+# Terraform format check
+cd terraform && terraform fmt -check
+
+# Terraform validate
+cd terraform && terraform init -backend=false && terraform validate
+```
+
 ## Contributing
 
 1. Create a feature branch
