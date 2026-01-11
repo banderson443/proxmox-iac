@@ -1,207 +1,240 @@
 # Proxmox Infrastructure as Code
 
-Infrastructure-as-code repository for managing Proxmox VE environments using Ansible, Terraform, and optionally Packer.
+This repository provides a complete, opinionated, and safe way to build and operate Proxmox-based infrastructure from absolute zero.
 
-## Overview
+## It uses:
 
-This repository provides a structured approach to managing Proxmox infrastructure through code, enabling version control, repeatability, and collaboration.
+- **Ansible** – host and VM configuration
+- **Terraform** – VM lifecycle management
+- **cloud-init** – initial VM access
+- **GitHub Actions** – basic quality checks
 
-## Tool Order and Rationale
+**No magic. No shortcuts. Everything is explicit and auditable.**
 
-### 1. Ansible (First) - Configuration Management
+## Who this is for
 
-**Why Ansible comes first:**
+This repository is for people who want to:
 
-Ansible is used for **configuration management** - setting up and maintaining the desired state of existing systems.
+- rebuild a Proxmox host without guessing what was done last time
+- create VMs repeatedly in a predictable way
+- avoid storage-related disasters
+- stop doing infrastructure "by memory"
+- understand exactly what happens first, second, and last
 
-- **Host Configuration**: Configure Proxmox hosts (packages, storage, networking)
-- **VM Post-Provisioning**: Configure VMs after creation (users, security, applications)
-- **Idempotency**: Safe to run multiple times
-- **Agentless**: Works over SSH, no agents needed
-- **Stateless**: No state files to manage
+**This is not beginner material, but it assumes zero prior state.**
 
-**Use Cases:**
-- Configure Proxmox host settings and storage
-- Install and configure software on VMs
-- Apply security hardening
-- Manage users and permissions
-- Configure services and applications
+## What this repository is NOT
 
-### 2. Terraform (Second) - Infrastructure Provisioning
+- Not a tutorial series
+- Not a one-click installer
+- Not a demo
+- Not opinion-free
 
-**Why Terraform comes second:**
+**You are expected to:**
 
-Terraform is used for **infrastructure provisioning** - creating and managing infrastructure resources.
+- read instructions
+- run commands intentionally
+- understand that infrastructure changes have consequences
 
-- **Resource Creation**: Create and manage VMs declaratively
-- **State Management**: Track infrastructure state and changes
-- **Lifecycle Management**: Create, update, and destroy resources
-- **Dependencies**: Handle resource dependencies automatically
+## The full flow (read once)
 
-**Use Cases:**
-- Create and manage VMs
-- Allocate storage volumes
-- Configure network resources
-- Manage infrastructure lifecycle
+1. Prepare Proxmox hosts with Ansible
+2. Lock storage rules before creating any VMs
+3. Create VMs using Terraform
+4. Bootstrap access via cloud-init
+5. Configure VMs with Ansible
+6. Enable services explicitly (Docker, etc.)
+7. Operate using documented procedures
 
-**Why not first:**
-- Requires infrastructure to exist first (Proxmox host must be configured)
-- Better for resource provisioning than configuration
-- State management adds complexity
+**No step is skipped.**
 
-### 3. Packer (Optional) - Image Building
-
-**Why Packer is optional:**
-
-Packer is used for **building VM templates/images** - creating standardized base images.
-
-- **Template Creation**: Build custom VM templates
-- **Standardization**: Create consistent base images
-- **Automation**: Automate template creation process
-
-**Use Cases:**
-- Build custom VM templates
-- Standardize base images
-- Create golden images for faster provisioning
-
-**When to use:**
-- When you need custom templates
-- When creating many similar VMs
-- When standardizing base configurations
-
-## Directory Structure
+## Repository structure (important)
 
 ```
 proxmox-infra/
-├── ansible/              # Configuration management (first)
-│   ├── inventory.example.yml
-│   ├── playbooks/
-│   │   ├── proxmox-host.yml    # Configure Proxmox hosts
-│   │   └── vm-base.yml          # Configure base VMs
-│   └── roles/                   # Reusable Ansible roles
-├── terraform/            # Infrastructure provisioning (second)
-│   ├── main.tf                  # Main Terraform configuration
-│   ├── variables.tf             # Variable definitions
-│   └── README.md                # Terraform-specific docs
-├── docs/                 # Documentation
-│   ├── architecture.md          # Architecture and design decisions
-│   ├── recovery-plan.md         # Disaster recovery procedures
-│   └── storage-decisions.md     # Storage architecture decisions
-├── .gitignore            # Git ignore patterns
-└── README.md             # This file
+├── ansible/          – all configuration logic
+├── terraform/        – VM lifecycle (create / destroy)
+├── docs/             – architecture, policy, operations
+├── .github/          – CI (lint + validate)
+└── README.md
 ```
 
-## Quick Start
+**If you don't know where something belongs, stop and look here again.**
 
-### Prerequisites
+## Step 0 – Requirements (do this first)
 
-- Proxmox VE host(s)
-- Ansible (>= 2.9)
-- Terraform (>= 1.0)
+You need one control machine (laptop or server):
+
+- Linux (recommended)
+- Ansible installed
+- Terraform installed
 - SSH access to Proxmox hosts
-- Proxmox API access
+- GitHub access (to clone the repo)
 
-### Initial Setup
+**Nothing runs directly from Proxmox.**
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/yourusername/proxmox-infra.git
-   cd proxmox-infra
-   ```
+## Step 1 – Clone the repository
 
-2. **Configure Ansible:**
-   ```bash
-   cp ansible/inventory.example.yml ansible/inventory.yml
-   # Edit ansible/inventory.yml with your hosts
-   ```
-
-3. **Configure Terraform:**
-   ```bash
-   cd terraform
-   cp terraform.tfvars.example terraform.tfvars  # If example exists
-   # Edit terraform.tfvars with your configuration
-   ```
-
-4. **Run Ansible playbooks:**
-   ```bash
-   cd ansible
-   ansible-playbook -i inventory.yml playbooks/proxmox-host.yml
-   ```
-
-5. **Initialize and apply Terraform:**
-   ```bash
-   cd terraform
-   terraform init
-   terraform plan
-   terraform apply
-   ```
-
-## Workflow
-
-1. **Ansible** configures the Proxmox host (storage, networking, packages)
-2. **Terraform** provisions VMs using templates
-3. **Ansible** configures the provisioned VMs (users, security, applications)
-4. **Packer** (optional) creates new templates as needed
-
-## Security
-
-- **Never commit secrets**: Use Ansible Vault, Terraform variables, or environment variables
-- **Use example configs**: All provided configs are examples only
-- **Rotate credentials**: Regularly update API tokens and passwords
-- **Limit access**: Use least-privilege principles for API access
-
-## Quality Gate / CI
-
-This repository includes automated quality checks via GitHub Actions:
-
-**Ansible Lint:**
-- Validates Ansible playbooks and roles
-- Checks syntax and best practices
-- Uses minimal, pragmatic rules (see `.ansible-lint`)
-
-**Terraform Format:**
-- Ensures consistent code formatting
-- Runs `terraform fmt -check`
-
-**Terraform Validate:**
-- Validates Terraform configuration syntax
-- Runs without backend (no credentials required)
-- Does not require provider initialization
-
-**CI runs on:**
-- Push to `master`/`main` branches
-- Pull requests to `master`/`main` branches
-
-**To run locally:**
 ```bash
-# Ansible lint
-ansible-lint ansible/
-
-# Terraform format check
-cd terraform && terraform fmt -check
-
-# Terraform validate
-cd terraform && terraform init -backend=false && terraform validate
+git clone https://github.com/insippo/proxmox-infra.git
+cd proxmox-infra
 ```
 
-## Contributing
+**Do not change anything yet.**
 
-1. Create a feature branch
-2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
+## Step 2 – Prepare Proxmox hosts (mandatory)
 
-## Documentation
+This step configures:
 
-- [Architecture Documentation](docs/architecture.md) - Detailed architecture and design decisions
-- [Recovery Plan](docs/recovery-plan.md) - Disaster recovery procedures
-- [Storage Decisions](docs/storage-decisions.md) - Storage architecture decisions
+- SSH safety
+- logging
+- sysctl baseline
+- optional admin user
 
-## License
+**Create inventory (never committed):**
 
-[Specify your license here]
+```bash
+cp ansible/inventory.example.yml ansible/inventory.yml
+nano ansible/inventory.yml
+```
 
-## Support
+Add your Proxmox hosts.
 
-[Add support information or issue tracker link]
+**Always dry-run first:**
+
+```bash
+ansible-playbook -i ansible/inventory.yml ansible/playbooks/proxmox-host.yml --check --diff
+```
+
+**If this fails, do not continue.**
+
+**Apply for real:**
+
+```bash
+ansible-playbook -i ansible/inventory.yml ansible/playbooks/proxmox-host.yml
+```
+
+## Step 3 – Read the storage policy (do not skip)
+
+Before creating any VM, read:
+
+**`docs/storage-policy.md`**
+
+This document exists because storage mistakes are expensive.
+
+**If you disagree with it, change the document before changing infrastructure.**
+
+## Step 4 – Create VMs with Terraform
+
+Terraform defines what exists, not how it is configured.
+
+**Prepare variables (never committed):**
+
+```bash
+cd terraform
+cp example.tfvars terraform.tfvars
+nano terraform.tfvars
+```
+
+**Validate first:**
+
+```bash
+terraform init -backend=false
+terraform validate
+```
+
+**Create VM(s):**
+
+```bash
+terraform apply
+```
+
+VMs are now created with:
+
+- cloud-init user
+- SSH keys injected
+- DHCP networking
+
+## Step 5 – Configure VMs with Ansible
+
+Add VMs to inventory (static or dynamic).
+
+**Static inventory (recommended initially):**
+
+```bash
+nano ansible/inventory.yml
+```
+
+Add VMs under the `vms` group.
+
+**Apply VM base configuration:**
+
+```bash
+ansible-playbook -i ansible/inventory.yml ansible/playbooks/vm-base.yml --limit vms
+```
+
+**At this point, VMs are ready but do nothing. That is intentional.**
+
+## Step 6 – Enable services (explicit opt-in)
+
+Nothing runs unless you enable it on purpose.
+
+**Example: enable Docker in lab only.**
+
+In `ansible/group_vars/lab.yml`:
+
+```yaml
+docker_enabled: true
+```
+
+**Apply:**
+
+```bash
+ansible-playbook -i ansible/inventory.yml ansible/playbooks/vm-base.yml --limit vms --extra-vars "env=lab"
+```
+
+**Production defaults remain conservative.**
+
+## Daily operations (read later)
+
+All operational procedures live under:
+
+**`docs/operations/`**
+
+Start with:
+
+- `how-to-add-vm.md`
+- `how-to-enable-docker.md`
+- `ssh-key-rotation.md`
+- `host-recovery.md`
+
+**If it is not written there, it is not supported.**
+
+## CI / Quality Gate
+
+Every push runs:
+
+- `ansible-lint`
+- `terraform fmt -check`
+- `terraform validate`
+
+**CI never deploys anything.**
+
+**Broken code should never reach production.**
+
+## Final rule
+
+If you catch yourself thinking:
+
+> "I'll just do this one thing manually"
+
+**Stop.**
+
+Either:
+
+- document it
+- automate it
+- or accept that it will break later
+
+**This repository is designed to age well. Treat it accordingly.**
 
