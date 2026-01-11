@@ -1,0 +1,44 @@
+# Prometheus configuration example for Proxmox monitoring
+# Copy to prometheus.yml and update with your actual targets
+# No credentials or real IPs in this file - use placeholders only
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'proxmox-cluster'
+    environment: 'production'
+
+# Alertmanager configuration (not configured yet)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: []
+
+# Load rules once and periodically evaluate them (not configured yet)
+# rule_files:
+#   - "alert_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Node Exporter - collects host metrics (CPU, memory, disk, network)
+  # Runs on each Proxmox host (read-only, safe)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+          - 'proxmox-host-1.example.com:9100'
+          - 'proxmox-host-2.example.com:9100'
+        labels:
+          job: 'node-exporter'
+          component: 'host-metrics'
+
+  # Proxmox Exporter - collects Proxmox-specific metrics (VMs, storage, cluster)
+  # Runs on monitoring server, queries Proxmox API (read-only, safe)
+  - job_name: 'proxmox-exporter'
+    static_configs:
+      - targets:
+          - 'monitoring-server.example.com:9221'
+        labels:
+          job: 'proxmox-exporter'
+          component: 'proxmox-metrics'
+
