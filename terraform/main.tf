@@ -36,7 +36,7 @@ provider "proxmox" {
 resource "proxmox_vm_qemu" "example_vm" {
   name        = "example-linux-vm"
   target_node = var.proxmox_node
-  clone       = var.base_template
+  clone       = "9000"
 
   # VM compute resources (from variables)
   cores   = var.vm_default_cores
@@ -78,7 +78,7 @@ resource "proxmox_vm_qemu" "monitoring_prometheus" {
   count       = var.monitoring_prometheus_enabled ? 1 : 0
   name        = "monitoring-prometheus"
   target_node = var.proxmox_node
-  clone       = var.base_template
+  clone       = "9000"
 
   # VM compute resources (minimal for monitoring)
   cores   = var.monitoring_prometheus_cores
@@ -118,7 +118,7 @@ resource "proxmox_vm_qemu" "monitoring_grafana" {
   count       = var.monitoring_grafana_enabled ? 1 : 0
   name        = "monitoring-grafana"
   target_node = var.proxmox_node
-  clone       = var.base_template
+  clone       = "9000"
 
   # VM compute resources (minimal for monitoring)
   cores   = var.monitoring_grafana_cores
