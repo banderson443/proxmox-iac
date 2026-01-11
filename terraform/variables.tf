@@ -27,22 +27,45 @@ variable "proxmox_node" {
 }
 
 variable "base_template" {
-  description = "Base VM template to clone from"
+  description = "Base VM template to clone from (must exist in Proxmox)"
   type        = string
   default     = "ubuntu-cloud-template"
 }
 
-# Example: Storage configuration
-# variable "storage_pool" {
-#   description = "Storage pool name"
-#   type        = string
-#   default     = "local-lvm"
-# }
+# VM default configuration
+variable "vm_default_cores" {
+  description = "Default number of CPU cores per VM"
+  type        = number
+  default     = 2
+}
 
-# Example: Network configuration
-# variable "network_bridge" {
-#   description = "Network bridge name"
-#   type        = string
-#   default     = "vmbr0"
-# }
+variable "vm_default_sockets" {
+  description = "Default number of CPU sockets per VM"
+  type        = number
+  default     = 1
+}
+
+variable "vm_default_memory" {
+  description = "Default memory allocation per VM (in MB)"
+  type        = number
+  default     = 2048
+}
+
+variable "vm_default_disk_size" {
+  description = "Default disk size per VM (e.g., '20G', '50G')"
+  type        = string
+  default     = "20G"
+}
+
+variable "vm_default_storage" {
+  description = "Default storage pool for VM disks"
+  type        = string
+  default     = "local-lvm"
+}
+
+variable "vm_default_bridge" {
+  description = "Default network bridge for VM network interfaces"
+  type        = string
+  default     = "vmbr0"
+}
 

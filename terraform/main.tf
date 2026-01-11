@@ -30,31 +30,40 @@ provider "proxmox" {
   # pm_tls_insecure = true
 }
 
-# Example: Create a VM
-# resource "proxmox_vm_qemu" "example_vm" {
-#   name        = "example-vm"
-#   target_node = var.proxmox_node
-#   clone       = var.base_template
-# 
-#   agent    = 1
-#   os_type  = "cloud-init"
-#   cores    = 2
-#   sockets  = 1
-#   cpu      = "host"
-#   memory   = 2048
-# 
-#   disk {
-#     storage = "local-lvm"
-#     type    = "scsi"
-#     size    = "20G"
-#   }
-# 
-#   network {
-#     model  = "virtio"
-#     bridge = "vmbr0"
-#   }
-# 
-#   # Cloud-init configuration
-#   ipconfig0 = "ip=dhcp"
-# }
+# Example: Create a generic Linux VM
+# This demonstrates declarative VM lifecycle management
+# All values come from variables (no hardcoded secrets or IPs)
+resource "proxmox_vm_qemu" "example_vm" {
+  name        = "example-linux-vm"
+  target_node = var.proxmox_node
+  clone       = var.base_template
+
+  # VM compute resources (from variables)
+  cores   = var.vm_default_cores
+  sockets = var.vm_default_sockets
+  cpu     = "host"
+  memory  = var.vm_default_memory
+
+  # VM storage (from variables)
+  disk {
+    storage = var.vm_default_storage
+    type    = "scsi"
+    size    = var.vm_default_disk_size
+  }
+
+  # Network configuration (minimal, no IP assumptions)
+  network {
+    model  = "virtio"
+    bridge = var.vm_default_bridge
+  }
+
+  # Cloud-init enabled (no network configuration here)
+  agent    = 1
+  os_type  = "cloud-init"
+
+  # Lifecycle: prevent accidental destruction
+  lifecycle {
+    prevent_destroy = false
+  }
+}
 

@@ -5,37 +5,95 @@ This directory contains Terraform configurations for managing Proxmox infrastruc
 ## Purpose
 
 Terraform is used **second** (after Ansible) to:
-- Provision and manage VM resources declaratively
-- Maintain infrastructure state
-- Enable version-controlled infrastructure changes
-- Support infrastructure lifecycle management
+- **Provision and manage VM resources declaratively** - Create, update, and destroy VMs
+- **Maintain infrastructure state** - Track what exists and what should exist
+- **Enable version-controlled infrastructure changes** - Infrastructure changes go through code review
+- **Support infrastructure lifecycle management** - Consistent VM provisioning across environments
+
+## Separation of Concerns: Terraform vs Ansible
+
+### Terraform (This Directory)
+- **What**: Infrastructure provisioning (VMs, storage volumes, network resources)
+- **When**: First, to create the infrastructure resources
+- **State**: Maintains state of what resources exist
+- **Scope**: Resource lifecycle (create, modify, destroy)
+
+### Ansible (../ansible/)
+- **What**: Configuration management (OS settings, packages, services)
+- **When**: After Terraform, to configure the provisioned resources
+- **State**: Stateless, ensures desired configuration
+- **Scope**: Configuration and application deployment
+
+**Workflow:**
+1. Terraform creates VMs
+2. Ansible configures the VMs (users, packages, security)
 
 ## Setup
 
 1. Install Terraform (>= 1.0)
-2. Configure provider credentials via variables
+2. Create `terraform.tfvars` file (see Variables section below)
 3. Initialize: `terraform init`
 4. Plan: `terraform plan`
 5. Apply: `terraform apply`
 
 ## Variables
 
-Create a `terraform.tfvars` file (not committed) with your configuration:
+**All configuration values come from variables or `.tfvars` files.**
+
+Create a `terraform.tfvars` file (not committed to git) with your configuration:
 
 ```hcl
+# Proxmox API connection
 proxmox_api_url          = "https://proxmox.example.com:8006/api2/json"
 proxmox_api_token_id     = "root@pam!terraform"
 proxmox_api_token_secret = "your-secret-here"
-proxmox_node             = "pve"
+
+# Proxmox node
+proxmox_node = "pve"
+
+# VM defaults (adjust as needed)
+vm_default_cores    = 2
+vm_default_sockets  = 1
+vm_default_memory   = 2048
+vm_default_disk_size = "20G"
+vm_default_storage  = "local-lvm"
+vm_default_bridge   = "vmbr0"
+
+# Base template (must exist in Proxmox)
+base_template = "ubuntu-cloud-template"
 ```
+
+**Important:**
+- `terraform.tfvars` is in `.gitignore` (never commit secrets)
+- Use environment variables (`TF_VAR_*`) for sensitive values
+- Example values in `variables.tf` are defaults only
+
+## Example Resources
+
+The `main.tf` file includes an example VM resource demonstrating:
+- Declarative VM definition
+- Variable-based configuration (no hardcoded values)
+- Minimal configuration (name, cores, memory, disk)
+- No network IP assumptions
 
 ## State Management
 
-Configure a remote backend (S3, Azure Storage, etc.) for state management in production.
+Configure a remote backend (S3, Azure Storage, etc.) for state management in production:
+
+```hcl
+terraform {
+  backend "s3" {
+    bucket = "your-terraform-state-bucket"
+    key    = "proxmox-infra/terraform.tfstate"
+    region = "us-east-1"
+  }
+}
+```
 
 ## Security
 
-- Never commit `terraform.tfvars` or `.tfstate` files
+- **Never commit** `terraform.tfvars` or `.tfstate` files
 - Use environment variables or secret management for sensitive values
 - Consider using Terraform Cloud or similar for team collaboration
+- Review storage policy (`../docs/storage-policy.md`) before provisioning storage
 
