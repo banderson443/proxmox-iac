@@ -6,8 +6,8 @@ terraform {
 
   required_providers {
     proxmox = {
-      source  = "Telmate/proxmox"
-      version = "~> 2.9"
+      source  = "bpg/proxmox"
+      version = "~> 0.66"
     }
   }
 
@@ -22,50 +22,58 @@ terraform {
 
 # Configure the Proxmox Provider
 provider "proxmox" {
-  pm_api_url      = var.proxmox_api_url
-  pm_api_token_id = var.proxmox_api_token_id
-  pm_api_token_secret = var.proxmox_api_token_secret
-
-  # Optional: Skip TLS verification (not recommended for production)
-  # pm_tls_insecure = true
+  endpoint  = var.proxmox_api_url
+  api_token = "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}"
+  insecure  = true
 }
 
 # Example: Create a generic Linux VM
 # This demonstrates declarative VM lifecycle management
 # All values come from variables (no hardcoded secrets or IPs)
-resource "proxmox_vm_qemu" "example_vm" {
+resource "proxmox_virtual_environment_vm" "example_vm" {
   name        = "example-linux-vm"
-  target_node = var.proxmox_node
-  clone       = "9000"
+  node_name   = var.proxmox_node
+  vm_id       = null  # Auto-assign VM ID
 
-  # VM compute resources (from variables)
-  cores   = var.vm_default_cores
-  sockets = var.vm_default_sockets
-  cpu     = "host"
-  memory  = var.vm_default_memory
-
-  # VM storage (from variables)
-  disk {
-    storage = var.vm_default_storage
-    type    = "scsi"
-    size    = var.vm_default_disk_size
+  # Clone from template
+  clone {
+    vm_id = 9000
   }
 
+  # VM compute resources (from variables)
+  cpu {
+    cores = var.vm_default_cores
+    type  = "host"
+  }
+  memory {
+    dedicated = var.vm_default_memory
+  }
+
+  # Disk comes from cloned template, no need to specify when cloning
+
   # Network configuration (minimal, no IP assumptions)
-  network {
-    model  = "virtio"
+  network_device {
     bridge = var.vm_default_bridge
   }
 
   # Cloud-init enabled for bootstrap
-  agent    = 1
-  os_type  = "cloud-init"
+  agent {
+    enabled = true
+  }
 
   # Cloud-init configuration: inject SSH keys and user for Ansible access
   # This makes the VM immediately reachable by Ansible after creation
-  ciuser     = var.cloudinit_user
-  sshkeys    = join("\n", var.cloudinit_ssh_keys)
-  ipconfig0  = "ip=dhcp"  # Use DHCP, no static IP assumptions
+  initialization {
+    user_account {
+      username = var.cloudinit_user
+      keys     = var.cloudinit_ssh_keys
+    }
+    ip_config {
+      ipv4 {
+        address = "dhcp"
+      }
+    }
+  }
 
   # Lifecycle: prevent accidental destruction
   lifecycle {
@@ -74,39 +82,50 @@ resource "proxmox_vm_qemu" "example_vm" {
 }
 
 # Prometheus monitoring VM (optional)
-resource "proxmox_vm_qemu" "monitoring_prometheus" {
-  count       = var.monitoring_prometheus_enabled ? 1 : 0
-  name        = "monitoring-prometheus"
-  target_node = var.proxmox_node
-  clone       = "9000"
+resource "proxmox_virtual_environment_vm" "monitoring_prometheus" {
+  count     = var.monitoring_prometheus_enabled ? 1 : 0
+  name      = "monitoring-prometheus"
+  node_name = var.proxmox_node
+  vm_id     = null  # Auto-assign VM ID
 
-  # VM compute resources (minimal for monitoring)
-  cores   = var.monitoring_prometheus_cores
-  sockets = var.vm_default_sockets
-  cpu     = "host"
-  memory  = var.monitoring_prometheus_memory
-
-  # VM storage (from variables)
-  disk {
-    storage = var.vm_default_storage
-    type    = "scsi"
-    size    = var.monitoring_prometheus_disk_size
+  # Clone from template
+  clone {
+    vm_id = 9000
   }
 
+  # VM compute resources (minimal for monitoring)
+  cpu {
+    cores = var.monitoring_prometheus_cores
+    type  = "host"
+  }
+  memory {
+    dedicated = var.monitoring_prometheus_memory
+  }
+
+  # Disk comes from cloned template, no need to specify when cloning
+
   # Network configuration (DHCP, no static IPs)
-  network {
-    model  = "virtio"
+  network_device {
     bridge = var.vm_default_bridge
   }
 
   # Cloud-init enabled for bootstrap
-  agent    = 1
-  os_type  = "cloud-init"
+  agent {
+    enabled = true
+  }
 
   # Cloud-init configuration: inject SSH keys and user for Ansible access
-  ciuser     = var.cloudinit_user
-  sshkeys    = join("\n", var.cloudinit_ssh_keys)
-  ipconfig0  = "ip=dhcp"
+  initialization {
+    user_account {
+      username = var.cloudinit_user
+      keys     = var.cloudinit_ssh_keys
+    }
+    ip_config {
+      ipv4 {
+        address = "dhcp"
+      }
+    }
+  }
 
   lifecycle {
     prevent_destroy = false
@@ -114,39 +133,50 @@ resource "proxmox_vm_qemu" "monitoring_prometheus" {
 }
 
 # Grafana monitoring VM (optional)
-resource "proxmox_vm_qemu" "monitoring_grafana" {
-  count       = var.monitoring_grafana_enabled ? 1 : 0
-  name        = "monitoring-grafana"
-  target_node = var.proxmox_node
-  clone       = "9000"
+resource "proxmox_virtual_environment_vm" "monitoring_grafana" {
+  count     = var.monitoring_grafana_enabled ? 1 : 0
+  name      = "monitoring-grafana"
+  node_name = var.proxmox_node
+  vm_id     = null  # Auto-assign VM ID
 
-  # VM compute resources (minimal for monitoring)
-  cores   = var.monitoring_grafana_cores
-  sockets = var.vm_default_sockets
-  cpu     = "host"
-  memory  = var.monitoring_grafana_memory
-
-  # VM storage (from variables)
-  disk {
-    storage = var.vm_default_storage
-    type    = "scsi"
-    size    = var.monitoring_grafana_disk_size
+  # Clone from template
+  clone {
+    vm_id = 9000
   }
 
+  # VM compute resources (minimal for monitoring)
+  cpu {
+    cores = var.monitoring_grafana_cores
+    type  = "host"
+  }
+  memory {
+    dedicated = var.monitoring_grafana_memory
+  }
+
+  # Disk comes from cloned template, no need to specify when cloning
+
   # Network configuration (DHCP, no static IPs)
-  network {
-    model  = "virtio"
+  network_device {
     bridge = var.vm_default_bridge
   }
 
   # Cloud-init enabled for bootstrap
-  agent    = 1
-  os_type  = "cloud-init"
+  agent {
+    enabled = true
+  }
 
   # Cloud-init configuration: inject SSH keys and user for Ansible access
-  ciuser     = var.cloudinit_user
-  sshkeys    = join("\n", var.cloudinit_ssh_keys)
-  ipconfig0  = "ip=dhcp"
+  initialization {
+    user_account {
+      username = var.cloudinit_user
+      keys     = var.cloudinit_ssh_keys
+    }
+    ip_config {
+      ipv4 {
+        address = "dhcp"
+      }
+    }
+  }
 
   lifecycle {
     prevent_destroy = false
@@ -159,21 +189,21 @@ output "vms" {
   value = merge(
     {
       example_vm = {
-        name        = proxmox_vm_qemu.example_vm.name
+        name        = proxmox_virtual_environment_vm.example_vm.name
         ssh_user    = var.cloudinit_user
         ansible_host = "<replace_with_vm_ip_or_use_proxmox_api>"
       }
     },
     var.monitoring_prometheus_enabled ? {
       monitoring_prometheus = {
-        name        = proxmox_vm_qemu.monitoring_prometheus[0].name
+        name        = proxmox_virtual_environment_vm.monitoring_prometheus[0].name
         ssh_user    = var.cloudinit_user
         ansible_host = "<replace_with_vm_ip_or_use_proxmox_api>"
       }
     } : {},
     var.monitoring_grafana_enabled ? {
       monitoring_grafana = {
-        name        = proxmox_vm_qemu.monitoring_grafana[0].name
+        name        = proxmox_virtual_environment_vm.monitoring_grafana[0].name
         ssh_user    = var.cloudinit_user
         ansible_host = "<replace_with_vm_ip_or_use_proxmox_api>"
       }
