@@ -63,7 +63,17 @@ Dashboards are automatically provisioned on Grafana service start. No manual imp
 
 ### Available Dashboards
 
-1. **Node Exporter Full** (`node-exporter-full.json`)
+1. **Proxmox VE Dashboard** (`proxmox-dashboard.json`)
+   - **Purpose**: Main Proxmox overview dashboard (similar to Proxmox Web UI)
+   - **Sections**:
+     - **Node Summary**: CPU, Memory, Disk, Uptime, Status, CPU cores
+     - **VM Summary**: Total VMs, Running, Stopped, Templates
+     - **Storage Summary**: Storages count, Total, Used, Available
+     - **Network Summary**: Networks count, Network In, Network Out
+   - **Data Source**: Prometheus (uses datasource name, not ID)
+   - **Refresh**: 30 seconds
+
+2. **Node Exporter Full** (`node-exporter-full.json`)
    - **Purpose**: Host-level metrics from Node Exporter
    - **Metrics**:
      - CPU usage and load average
@@ -74,7 +84,7 @@ Dashboards are automatically provisioned on Grafana service start. No manual imp
    - **Variables**: `instance` (select specific Proxmox hosts)
    - **Data Source**: Prometheus (uses datasource name, not ID)
 
-2. **Proxmox VE Cluster / Node Overview** (`proxmox-cluster-overview.json`)
+3. **Proxmox VE Cluster / Node Overview** (`proxmox-cluster-overview.json`)
    - **Purpose**: Proxmox cluster and VM overview
    - **Metrics**:
      - Cluster node status
