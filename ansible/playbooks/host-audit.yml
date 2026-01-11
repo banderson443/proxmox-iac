@@ -1,0 +1,174 @@
+---
+# Playbook: Read-only Proxmox host audit
+# Scope: Gather system information without making any changes
+# Usage:
+#   ansible-playbook -i inventory.yml playbooks/host-audit.yml
+
+- name: Audit Proxmox hosts (read-only)
+  hosts: proxmox_hosts
+  become: true
+  gather_facts: true
+
+  tasks:
+    # OS and kernel information
+    - name: Gather OS and kernel version
+      ansible.builtin.command:
+        cmd: uname -a
+      register: uname_output
+      changed_when: false
+
+    - name: Get Proxmox version
+      ansible.builtin.command:
+        cmd: pveversion
+      register: pveversion_output
+      changed_when: false
+      failed_when: false
+
+    # CPU and memory summary
+    - name: Get CPU information
+      ansible.builtin.command:
+        cmd: lscpu
+      register: cpu_info
+      changed_when: false
+
+    - name: Get memory summary
+      ansible.builtin.command:
+        cmd: free -h
+      register: memory_info
+      changed_when: false
+
+    # Storage devices detection
+    - name: List NVMe devices
+      ansible.builtin.command:
+        cmd: lsblk -d -o NAME,SIZE,TYPE,MODEL | grep -E "^(nvme|NAME)" || echo "No NVMe devices found"
+      register: nvme_devices
+      changed_when: false
+      failed_when: false
+
+    - name: List SSD devices
+      ansible.builtin.command:
+        cmd: lsblk -d -o NAME,SIZE,TYPE,MODEL | grep -E "^(sd|vd|hd)" || echo "No SSD/HDD devices found"
+      register: ssd_devices
+      changed_when: false
+      failed_when: false
+
+    - name: Check for ZFS presence
+      ansible.builtin.command:
+        cmd: zpool list 2>/dev/null || echo "ZFS not detected"
+      register: zfs_pools
+      changed_when: false
+      failed_when: false
+
+    # Network interfaces summary
+    - name: Get network interfaces
+      ansible.builtin.command:
+        cmd: ip -br addr show
+      register: network_interfaces
+      changed_when: false
+
+    - name: Get network bridges (Proxmox-specific)
+      ansible.builtin.command:
+        cmd: brctl show 2>/dev/null || ip link show type bridge
+      register: network_bridges
+      changed_when: false
+      failed_when: false
+
+    # Running services summary
+    - name: Get running services count
+      ansible.builtin.command:
+        cmd: systemctl list-units --type=service --state=running --no-pager | wc -l
+      register: running_services_count
+      changed_when: false
+
+    - name: Get failed services
+      ansible.builtin.command:
+        cmd: systemctl list-units --type=service --state=failed --no-pager || echo "No failed services"
+      register: failed_services
+      changed_when: false
+      failed_when: false
+
+    # Collect all audit data per host
+    - name: Compile audit results for this host
+      ansible.builtin.set_fact:
+        host_audit_section: |
+          ## Host: {{ inventory_hostname }}
+          
+          ### System Information
+          - **OS**: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          - **Kernel**: {{ ansible_kernel }}
+          - **Architecture**: {{ ansible_architecture }}
+          - **Uptime**: {{ ansible_uptime_seconds | int // 86400 }} days
+          
+          ### Proxmox Version
+          ```
+          {{ pveversion_output.stdout | default('Not available') }}
+          ```
+          
+          ### CPU Information
+          ```
+          {{ cpu_info.stdout }}
+          ```
+          
+          ### Memory Summary
+          ```
+          {{ memory_info.stdout }}
+          ```
+          
+          ### Storage Devices
+          **NVMe Devices:**
+          ```
+          {{ nvme_devices.stdout }}
+          ```
+          
+          **SSD/HDD Devices:**
+          ```
+          {{ ssd_devices.stdout }}
+          ```
+          
+          **ZFS Pools:**
+          ```
+          {{ zfs_pools.stdout }}
+          ```
+          
+          ### Network Interfaces
+          ```
+          {{ network_interfaces.stdout }}
+          ```
+          
+          **Network Bridges:**
+          ```
+          {{ network_bridges.stdout }}
+          ```
+          
+          ### Services
+          - **Running services**: {{ running_services_count.stdout | trim }}
+          - **Failed services**: 
+          ```
+          {{ failed_services.stdout }}
+          ```
+          
+          ---
+
+  # Write all results to file in a single task
+  post_tasks:
+    - name: Compile complete audit report
+      ansible.builtin.set_fact:
+        complete_audit_report: |
+          # Proxmox Host Audit Report
+          
+          Generated: {{ ansible_date_time.iso8601 }}
+          
+          {% for host in groups['proxmox_hosts'] %}
+          {{ hostvars[host]['host_audit_section'] | default('') }}
+          {% endfor %}
+      delegate_to: localhost
+      run_once: true
+
+    - name: Write audit report to markdown file
+      ansible.builtin.copy:
+        content: "{{ complete_audit_report }}"
+        dest: "{{ playbook_dir }}/../../docs/host-audit.md"
+        mode: '0644'
+      delegate_to: localhost
+      run_once: true
+
