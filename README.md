@@ -1,6 +1,6 @@
 # Proxmox Infrastructure as Code
 
-This repository provides a complete, opinionated, and safe way to build and operate Proxmox-based infrastructure from absolute zero.
+This repository provides a safe way to build and operate Proxmox-based infrastructure from absolute zero.
 
 ## It uses:
 
@@ -9,7 +9,7 @@ This repository provides a complete, opinionated, and safe way to build and oper
 - **cloud-init** ??? initial VM access
 - **GitHub Actions** ??? basic quality checks
 
-**No magic. No shortcuts. Everything is explicit and auditable.**
+**Everything is explicit and auditable.**
 
 ## Who this is for
 
@@ -21,14 +21,14 @@ This repository is for people who want to:
 - stop doing infrastructure "by memory"
 - understand exactly what happens first, second, and last
 
-**This is not beginner material, but it assumes zero prior state.**
+**Assumes zero prior state.**
 
 ## What this repository is NOT
 
 - Not a tutorial series
 - Not a one-click installer
 - Not a demo
-- Not opinion-free
+- Not a goat farm
 
 **You are expected to:**
 
@@ -63,7 +63,7 @@ proxmox-infra/
 
 ## Step 0 ??? Requirements (do this first)
 
-You need one control machine (laptop or server):
+You need one control machine (laptop or server or wsl):
 
 - Linux (recommended)
 - Ansible installed
@@ -77,7 +77,6 @@ You need one control machine (laptop or server):
 
 ```bash
 git clone https://github.com/banderson443/proxmox-iac.git
-cd proxmox-infra
 ```
 
 **Do not change anything yet.**
@@ -254,4 +253,5 @@ Either:
 - or accept that it will break later
 
 **This repository is designed to age well. Treat it accordingly.**
+
 
