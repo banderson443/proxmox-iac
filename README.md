@@ -4,10 +4,10 @@ This repository provides a complete, opinionated, and safe way to build and oper
 
 ## It uses:
 
-- **Ansible** – host and VM configuration
-- **Terraform** – VM lifecycle management
-- **cloud-init** – initial VM access
-- **GitHub Actions** – basic quality checks
+- **Ansible** ??? host and VM configuration
+- **Terraform** ??? VM lifecycle management
+- **cloud-init** ??? initial VM access
+- **GitHub Actions** ??? basic quality checks
 
 **No magic. No shortcuts. Everything is explicit and auditable.**
 
@@ -52,16 +52,16 @@ This repository is for people who want to:
 
 ```
 proxmox-infra/
-├── ansible/          – all configuration logic
-├── terraform/        – VM lifecycle (create / destroy)
-├── docs/             – architecture, policy, operations
-├── .github/          – CI (lint + validate)
-└── README.md
+????????? ansible/          ??? all configuration logic
+????????? terraform/        ??? VM lifecycle (create / destroy)
+????????? docs/             ??? architecture, policy, operations
+????????? .github/          ??? CI (lint + validate)
+????????? README.md
 ```
 
 **If you don't know where something belongs, stop and look here again.**
 
-## Step 0 – Requirements (do this first)
+## Step 0 ??? Requirements (do this first)
 
 You need one control machine (laptop or server):
 
@@ -73,16 +73,16 @@ You need one control machine (laptop or server):
 
 **Nothing runs directly from Proxmox.**
 
-## Step 1 – Clone the repository
+## Step 1 ??? Clone the repository
 
 ```bash
-git clone https://github.com/insippo/proxmox-infra.git
+git clone https://github.com/banderson443/proxmox-iac.git
 cd proxmox-infra
 ```
 
 **Do not change anything yet.**
 
-## Step 2 – Prepare Proxmox hosts (mandatory)
+## Step 2 ??? Prepare Proxmox hosts (mandatory)
 
 This step configures:
 
@@ -114,7 +114,7 @@ ansible-playbook -i ansible/inventory.yml ansible/playbooks/proxmox-host.yml --c
 ansible-playbook -i ansible/inventory.yml ansible/playbooks/proxmox-host.yml
 ```
 
-## Step 3 – Read the storage policy (do not skip)
+## Step 3 ??? Read the storage policy (do not skip)
 
 Before creating any VM, read:
 
@@ -124,7 +124,7 @@ This document exists because storage mistakes are expensive.
 
 **If you disagree with it, change the document before changing infrastructure.**
 
-## Step 3.5 – Create VM template from cloud image (required)
+## Step 3.5 ??? Create VM template from cloud image (required)
 
 Before running Terraform, you need a VM template:
 
@@ -139,7 +139,7 @@ This creates a Debian 12 cloud-init template (recommended):
 
 **Why cloud images:** Faster than ISO installation, designed for automation, consistent results.
 
-## Step 4 – Create VMs with Terraform
+## Step 4 ??? Create VMs with Terraform
 
 Terraform defines what exists, not how it is configured.
 
@@ -172,7 +172,7 @@ VMs are now created with:
 - SSH keys injected
 - DHCP networking
 
-## Step 5 – Configure VMs with Ansible
+## Step 5 ??? Configure VMs with Ansible
 
 Add VMs to inventory (static or dynamic).
 
@@ -192,7 +192,7 @@ ansible-playbook -i ansible/inventory.yml ansible/playbooks/vm-base.yml --limit 
 
 **At this point, VMs are ready but do nothing. That is intentional.**
 
-## Step 6 – Enable services (explicit opt-in)
+## Step 6 ??? Enable services (explicit opt-in)
 
 Nothing runs unless you enable it on purpose.
 
