@@ -52,11 +52,11 @@ This repository is for people who want to:
 
 ```
 proxmox-infra/
-????????? ansible/          - all configuration logic
-????????? terraform/        - VM lifecycle (create / destroy)
-????????? docs/             - architecture, policy, operations
-????????? .github/          - CI (lint + validate)
-????????? README.md
+|-- ansible/          - all configuration logic
+|-- terraform/        - VM lifecycle (create / destroy)
+|-- docs/             - architecture, policy, operations
+|-- .github/          - CI (lint + validate)
+`-- README.md
 ```
 
 **If you don't know where something belongs, stop and look here again.**
