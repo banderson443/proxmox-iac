@@ -124,6 +124,21 @@ This document exists because storage mistakes are expensive.
 
 **If you disagree with it, change the document before changing infrastructure.**
 
+## Step 3.5 – Create VM template from cloud image (required)
+
+Before running Terraform, you need a VM template:
+
+**`docs/operations/how-to-create-cloud-image-template.md`**
+
+This creates a Debian 12 cloud-init template (recommended):
+
+- Template ID: 9000
+- Pre-configured with cloud-init
+- Optimized for automated VM deployment
+- Default user: `debian`
+
+**Why cloud images:** Faster than ISO installation, designed for automation, consistent results.
+
 ## Step 4 – Create VMs with Terraform
 
 Terraform defines what exists, not how it is configured.
@@ -132,9 +147,11 @@ Terraform defines what exists, not how it is configured.
 
 ```bash
 cd terraform
-cp example.tfvars terraform.tfvars
+cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars
 ```
+
+**Important**: Set `cloudinit_user` to match your cloud image (e.g., `"debian"` for Debian images).
 
 **Validate first:**
 

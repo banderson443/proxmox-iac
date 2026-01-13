@@ -1,0 +1,44 @@
+# Proxmox API configuration
+# Get these values from docs/terraform-proxmox-api-token.md
+proxmox_api_url = https://<proxmox_host_ip>:8006/api2/json
+proxmox_api_token_id = root@pam!terraform
+proxmox_api_token_secret = <your_secret_here>
+
+# Proxmox node name (run pvesh get /nodes to list)
+proxmox_node = pve
+
+# VM defaults
+vm_default_cores = 2
+vm_default_sockets = 1
+vm_default_memory = 2048
+vm_default_disk_size = 20G
+
+# Storage configuration
+# IMPORTANT: Review docs/storage-policy.md before changing
+# Recommended: local-lvm (default) or directory-backed storage like data
+vm_default_storage = local-lvm
+
+# Network bridge (run brctl show on Proxmox to list bridges)
+vm_default_bridge = vmbr0
+
+# Cloud-init user configuration
+# IMPORTANT: Must match the cloud image default user
+# - Debian cloud images: use debian
+# - Ubuntu cloud images: use ubuntu  
+# - Generic/custom images: use your configured user
+cloudinit_user = debian
+
+# SSH keys for cloud-init (add your public key(s))
+# Get your public key: cat ~/.ssh/id_rsa.pub
+cloudinit_ssh_keys = [
+  ssh-rsa AAAAB3Nza...your-public-key-here... user@hostname
+]
+
+# Optional: Monitoring VMs (disabled by default)
+monitoring_prometheus_enabled = false
+monitoring_prometheus_cores = 2
+monitoring_prometheus_memory = 2048
+
+monitoring_grafana_enabled = false
+monitoring_grafana_cores = 2
+monitoring_grafana_memory = 2048

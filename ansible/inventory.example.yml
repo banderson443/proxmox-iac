@@ -33,8 +33,11 @@ all:
           ansible_host: "<vm_example_2_address_or_fqdn>"
       vars:
         # Common variables for all VMs
-        # ansible_user matches the cloud-init user from Terraform (default: admin)
-        ansible_user: "admin"
+        # IMPORTANT: ansible_user must match cloud-init user from Terraform
+        # - Debian cloud images: use "debian"
+        # - Ubuntu cloud images: use "ubuntu"
+        # - Custom images: use your configured user
+        ansible_user: "debian"
         ansible_port: 22
         ansible_ssh_common_args: '-o StrictHostKeyChecking=accept-new'
 

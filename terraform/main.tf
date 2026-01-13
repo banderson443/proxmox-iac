@@ -82,6 +82,78 @@ resource "proxmox_virtual_environment_vm" "example_vm" {
   }
 }
 
+# Manual install VM 1 (from ISO-based template)
+resource "proxmox_virtual_environment_vm" "manual_vm_1" {
+  name      = "debian-manual-1"
+  node_name = var.proxmox_node
+  vm_id     = null # Auto-assign VM ID
+
+  # Clone from manual template
+  clone {
+    vm_id = 9001
+  }
+
+  # VM compute resources (from variables)
+  cpu {
+    cores = var.vm_default_cores
+    type  = "host"
+  }
+  memory {
+    dedicated = var.vm_default_memory
+  }
+
+  # Network configuration (minimal, no IP assumptions)
+  network_device {
+    bridge = var.vm_default_bridge
+  }
+
+  # Agent enabled (installed during template creation)
+  agent {
+    enabled = true
+  }
+
+  # Lifecycle: prevent accidental destruction
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+# Manual install VM 2 (from ISO-based template)
+resource "proxmox_virtual_environment_vm" "manual_vm_2" {
+  name      = "debian-manual-2"
+  node_name = var.proxmox_node
+  vm_id     = null # Auto-assign VM ID
+
+  # Clone from manual template
+  clone {
+    vm_id = 9001
+  }
+
+  # VM compute resources (from variables)
+  cpu {
+    cores = var.vm_default_cores
+    type  = "host"
+  }
+  memory {
+    dedicated = var.vm_default_memory
+  }
+
+  # Network configuration (minimal, no IP assumptions)
+  network_device {
+    bridge = var.vm_default_bridge
+  }
+
+  # Agent enabled (installed during template creation)
+  agent {
+    enabled = true
+  }
+
+  # Lifecycle: prevent accidental destruction
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
 # Prometheus monitoring VM (optional)
 resource "proxmox_virtual_environment_vm" "monitoring_prometheus" {
   count     = var.monitoring_prometheus_enabled ? 1 : 0
@@ -194,6 +266,16 @@ output "vms" {
       example_vm = {
         name         = proxmox_virtual_environment_vm.example_vm.name
         ssh_user     = var.cloudinit_user
+        ansible_host = "<replace_with_vm_ip_or_use_proxmox_api>"
+      }
+      manual_vm_1 = {
+        name         = proxmox_virtual_environment_vm.manual_vm_1.name
+        ssh_user     = "debian"
+        ansible_host = "<replace_with_vm_ip_or_use_proxmox_api>"
+      }
+      manual_vm_2 = {
+        name         = proxmox_virtual_environment_vm.manual_vm_2.name
+        ssh_user     = "debian"
         ansible_host = "<replace_with_vm_ip_or_use_proxmox_api>"
       }
     },
